@@ -14,11 +14,19 @@ router = APIRouter()
 _MAX_BYTES = 512 * 1024
 
 
+def _list_logs() -> list[str]:
+    if not LOG_DIR.exists():
+        return []
+    return [
+        p.name
+        for p in sorted(LOG_DIR.glob("*.log"), key=lambda p: p.stat().st_mtime, reverse=True)
+    ]
+
+
 @router.get("", response_class=HTMLResponse)
 async def logs_list(request: Request):
-    files = _list_logs()
-    return templates.TemplateResponse("logs.html", {
-        "request": request, "files": files, "selected": None, "content": None,
+    return templates.TemplateResponse(request, "logs.html", {
+        "log_files": _list_logs(), "selected": None, "content": None, "truncated": False,
     })
 
 
@@ -31,7 +39,8 @@ async def log_view(request: Request, filename: str):
         raise HTTPException(status_code=404, detail="Log file not found")
 
     size = log_path.stat().st_size
-    if size > _MAX_BYTES:
+    truncated = size > _MAX_BYTES
+    if truncated:
         with open(log_path, "rb") as f:
             f.seek(size - _MAX_BYTES)
             content = f.read().decode("utf-8", errors="replace")
@@ -39,15 +48,7 @@ async def log_view(request: Request, filename: str):
     else:
         content = log_path.read_text(encoding="utf-8", errors="replace")
 
-    return templates.TemplateResponse("logs.html", {
-        "request": request, "files": _list_logs(), "selected": filename, "content": content,
+    return templates.TemplateResponse(request, "logs.html", {
+        "log_files": _list_logs(), "selected": filename,
+        "content": content, "truncated": truncated,
     })
-
-
-def _list_logs() -> list[dict]:
-    if not LOG_DIR.exists():
-        return []
-    return [
-        {"name": p.name, "size_kb": round(p.stat().st_size / 1024, 1)}
-        for p in sorted(LOG_DIR.glob("*.log"), key=lambda p: p.stat().st_mtime, reverse=True)
-    ]

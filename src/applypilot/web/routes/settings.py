@@ -35,27 +35,27 @@ def _load_profile() -> dict:
         return {}
 
 
-def _load_env_vars() -> list[tuple[str, str, bool]]:
+def _load_env_pairs() -> list[tuple[str, str]]:
+    """Return (key, display_value) pairs — sensitive values are masked."""
     if not ENV_PATH.exists():
         return []
-    results = []
+    pairs = []
     for line in ENV_PATH.read_text(encoding="utf-8").splitlines():
         line = line.strip()
         if not line or line.startswith("#") or "=" not in line:
             continue
         key, _, val = line.partition("=")
         key = key.strip()
-        is_sensitive = key in _SENSITIVE_KEYS
-        results.append((key, _MASK if is_sensitive else val, is_sensitive))
-    return results
+        pairs.append((key, _MASK if key in _SENSITIVE_KEYS else val))
+    return pairs
 
 
 # --- Profile ---
 
 @router.get("/profile", response_class=HTMLResponse)
 async def profile_get(request: Request):
-    return templates.TemplateResponse("settings/profile.html", {
-        "request": request, "profile": _load_profile(), "saved": False, "error": None,
+    return templates.TemplateResponse(request, "settings/profile.html", {
+        "profile": _load_profile(), "saved": False, "error": None,
     })
 
 
@@ -73,7 +73,6 @@ async def profile_post(request: Request):
         else:
             profile[key] = val
 
-    # Convert array fields from comma-separated strings to lists
     for section in profile.values():
         if not isinstance(section, dict):
             continue
@@ -81,7 +80,6 @@ async def profile_post(request: Request):
             if field in _ARRAY_FIELDS and isinstance(val, str):
                 section[field] = [s.strip() for s in val.split(",") if s.strip()]
 
-    # Never overwrite password with empty string
     submitted_pw = profile.get("personal", {}).get("password", "")
     if not submitted_pw:
         existing_pw = existing.get("personal", {}).get("password", "")
@@ -94,8 +92,8 @@ async def profile_post(request: Request):
     except OSError as e:
         error = str(e)
 
-    return templates.TemplateResponse("settings/profile.html", {
-        "request": request, "profile": profile, "saved": error is None, "error": error,
+    return templates.TemplateResponse(request, "settings/profile.html", {
+        "profile": profile, "saved": error is None, "error": error,
     })
 
 
@@ -104,28 +102,27 @@ async def profile_post(request: Request):
 @router.get("/searches", response_class=HTMLResponse)
 async def searches_get(request: Request):
     content = SEARCH_CONFIG_PATH.read_text(encoding="utf-8") if SEARCH_CONFIG_PATH.exists() else ""
-    return templates.TemplateResponse("settings/searches.html", {
-        "request": request, "content": content, "saved": False, "parse_error": None, "error": None,
+    return templates.TemplateResponse(request, "settings/searches.html", {
+        "content": content, "saved": False, "error": None,
     })
 
 
 @router.post("/searches", response_class=HTMLResponse)
 async def searches_post(request: Request, content: str = Form(...)):
-    parse_error = error = None
+    error = None
     saved = False
     try:
         yaml.safe_load(content)
     except yaml.YAMLError as e:
-        parse_error = str(e)
-    if not parse_error:
+        error = str(e)
+    if not error:
         try:
             SEARCH_CONFIG_PATH.write_text(content, encoding="utf-8")
             saved = True
         except OSError as e:
             error = str(e)
-    return templates.TemplateResponse("settings/searches.html", {
-        "request": request, "content": content, "saved": saved,
-        "parse_error": parse_error, "error": error,
+    return templates.TemplateResponse(request, "settings/searches.html", {
+        "content": content, "saved": saved, "error": error,
     })
 
 
@@ -133,8 +130,8 @@ async def searches_post(request: Request, content: str = Form(...)):
 
 @router.get("/env", response_class=HTMLResponse)
 async def env_get(request: Request):
-    return templates.TemplateResponse("settings/env.html", {
-        "request": request, "env_vars": _load_env_vars(), "saved": False, "error": None,
+    return templates.TemplateResponse(request, "settings/env.html", {
+        "pairs": _load_env_pairs(), "saved": False, "error": None,
     })
 
 
@@ -170,6 +167,6 @@ async def env_post(request: Request):
     except OSError as e:
         error = str(e)
 
-    return templates.TemplateResponse("settings/env.html", {
-        "request": request, "env_vars": _load_env_vars(), "saved": error is None, "error": error,
+    return templates.TemplateResponse(request, "settings/env.html", {
+        "pairs": _load_env_pairs(), "saved": error is None, "error": error,
     })

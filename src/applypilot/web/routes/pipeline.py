@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import logging
-from pathlib import Path
 
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
@@ -18,8 +17,9 @@ PIPELINE_STAGES = {"discover", "enrich", "score", "tailor", "cover", "pdf", "all
 
 def _status_response(request: Request, status_code: int = 200):
     return templates.TemplateResponse(
+        request,
         "partials/pipeline_status.html",
-        {"request": request, "pipeline": pipeline_state.as_dict()},
+        {"pipeline": pipeline_state.as_dict()},
         status_code=status_code,
     )
 
@@ -32,7 +32,6 @@ def _run_in_thread(stage: str, min_score: int, workers: int, validation_mode: st
         else:
             from applypilot.pipeline import run_pipeline
             stages = [stage] if stage != "all" else None
-            # For "all", run stages one at a time so we can check stop between them
             if stages is None:
                 ordered = ["discover", "enrich", "score", "tailor", "cover", "pdf"]
                 for s in ordered:

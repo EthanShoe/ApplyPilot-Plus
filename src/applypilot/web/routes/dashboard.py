@@ -33,18 +33,14 @@ def _get_jobs(min_score: int = 5, search: str = "") -> list[dict]:
 
 @router.get("/", response_class=HTMLResponse)
 async def dashboard(request: Request):
-    stats = get_stats()
-    jobs = _get_jobs()
-    pipeline = pipeline_state.as_dict()
-    return templates.TemplateResponse("dashboard.html", {
-        "request": request, "stats": stats, "jobs": jobs, "pipeline": pipeline,
+    return templates.TemplateResponse(request, "dashboard.html", {
+        "stats": get_stats(), "jobs": _get_jobs(), "pipeline": pipeline_state.as_dict(),
     })
 
 
 @router.get("/partials/stats", response_class=HTMLResponse)
 async def stats_partial(request: Request):
-    return templates.TemplateResponse("partials/stats.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "partials/stats.html", {
         "stats": get_stats(),
         "pipeline": pipeline_state.as_dict(),
     })
@@ -52,15 +48,13 @@ async def stats_partial(request: Request):
 
 @router.get("/partials/job-cards", response_class=HTMLResponse)
 async def job_cards_partial(request: Request, min_score: int = 5, search: str = ""):
-    return templates.TemplateResponse("partials/job_cards.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "partials/job_cards.html", {
         "jobs": _get_jobs(min_score=min_score, search=search),
     })
 
 
 @router.get("/partials/pipeline-status", response_class=HTMLResponse)
 async def pipeline_status_partial(request: Request):
-    return templates.TemplateResponse("partials/pipeline_status.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "partials/pipeline_status.html", {
         "pipeline": pipeline_state.as_dict(),
     })
