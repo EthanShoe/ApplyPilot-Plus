@@ -1,0 +1,46 @@
+{% if jobs %}
+<div class="job-grid">
+{% for job in jobs %}
+{% set score = job.fit_score or 0 %}
+{% set score_color = "#10b981" if score >= 7 else ("#f59e0b" if score >= 5 else "#ef4444") %}
+<div class="job-card {% if job.apply_status == 'applied' %}job-card--applied{% elif job.apply_status %}job-card--failed{% endif %}"
+     data-score="{{ score }}" data-site="{{ (job.site or '') | e }}">
+
+  {% if job.apply_status == 'applied' %}
+    <div class="applied-banner">✓ Applied</div>
+  {% elif job.apply_status %}
+    <div class="failed-banner">✗ {{ job.apply_status | e }}{% if job.apply_error %} — {{ job.apply_error[:60] | e }}{% endif %}</div>
+  {% endif %}
+
+  <div class="card-header">
+    <span class="score-pill" style="background:{{ score_color }}">{{ score }}</span>
+    <a href="{{ (job.url or '#') | e }}" class="job-title" target="_blank" rel="noopener">{{ (job.title or 'Untitled') | e }}</a>
+  </div>
+
+  <div class="meta-row">
+    <span class="meta-tag">{{ (job.site or '') | e }}</span>
+    {% if job.salary %}<span class="meta-tag salary">{{ job.salary | e }}</span>{% endif %}
+    {% if job.location %}<span class="meta-tag location">{{ job.location[:40] | e }}</span>{% endif %}
+    {% if job.tailored_resume_path %}<span class="meta-tag tailored">✓ Tailored</span>{% endif %}
+    {% if job.cover_letter_path %}<span class="meta-tag cover">✓ Cover</span>{% endif %}
+  </div>
+
+  {% if job.score_reasoning %}
+  <div class="keywords-row">{{ job.score_reasoning.split('\n')[0][:120] | e }}</div>
+  {% endif %}
+
+  {% if job.full_description %}
+  <p class="desc-preview">{{ job.full_description[:200] | e }}</p>
+  {% endif %}
+
+  <div class="card-footer">
+    {% if job.application_url %}
+    <a href="{{ job.application_url | e }}" class="apply-link" target="_blank" rel="noopener">Apply</a>
+    {% endif %}
+  </div>
+</div>
+{% endfor %}
+</div>
+{% else %}
+<p class="empty-state">No jobs at this score threshold yet. Run the pipeline to discover and score jobs.</p>
+{% endif %}

@@ -680,6 +680,16 @@ def doctor() -> None:
 
 
 
+@app.command()
+def serve(
+    host: str = typer.Option("0.0.0.0", "--host", help="Bind host."),
+    port: int = typer.Option(8093, "--port", "-p", help="Bind port."),
+) -> None:
+    """Start the ApplyPilot web UI."""
+    import uvicorn
+    uvicorn.run("applypilot.web.app:app", host=host, port=port, log_level="info")
+
+
 # Import and add greenhouse subcommand
 from applypilot.cli_greenhouse import app as greenhouse_app
 app.add_typer(greenhouse_app, name="greenhouse", help="Manage Greenhouse ATS employers")

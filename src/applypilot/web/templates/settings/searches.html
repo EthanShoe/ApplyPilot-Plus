@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Searches — ApplyPilot{% endblock %}
+{% block content %}
+<h1>Search Configuration</h1>
+
+{% if saved %}<div class="alert alert-success">Searches saved.</div>{% endif %}
+{% if error %}<div class="alert alert-error">{{ error | e }}</div>{% endif %}
+
+<form method="POST" action="/settings/searches">
+  <fieldset class="fieldset">
+    <legend>searches.yaml <small style="color:#475569;font-weight:400">— Edit raw YAML</small></legend>
+    <textarea class="code-textarea" name="content" rows="30" spellcheck="false">{{ content | e }}</textarea>
+  </fieldset>
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary">Save Searches</button>
+    <a href="/settings/searches" class="btn btn-secondary">Reset</a>
+  </div>
+</form>
+{% endblock %}

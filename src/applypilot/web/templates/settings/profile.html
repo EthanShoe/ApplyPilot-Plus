@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}Profile — ApplyPilot{% endblock %}
+{% block content %}
+<h1>Profile</h1>
+
+{% if saved %}<div class="alert alert-success">Profile saved.</div>{% endif %}
+{% if error %}<div class="alert alert-error">{{ error | e }}</div>{% endif %}
+
+<form method="POST" action="/settings/profile">
+
+  <fieldset class="fieldset">
+    <legend>Personal</legend>
+    {% set p = profile.get('personal', {}) %}
+    <div class="form-grid">
+      <label class="field">Full Name<input type="text" name="personal.full_name" value="{{ p.get('full_name','') | e }}"></label>
+      <label class="field">Preferred Name<input type="text" name="personal.preferred_name" value="{{ p.get('preferred_name','') | e }}"></label>
+      <label class="field">Email<input type="email" name="personal.email" value="{{ p.get('email','') | e }}"></label>
+      <label class="field">Phone<input type="text" name="personal.phone" value="{{ p.get('phone','') | e }}"></label>
+      <label class="field">City<input type="text" name="personal.city" value="{{ p.get('city','') | e }}"></label>
+      <label class="field">State / Province<input type="text" name="personal.province_state" value="{{ p.get('province_state','') | e }}"></label>
+      <label class="field">Country<input type="text" name="personal.country" value="{{ p.get('country','') | e }}"></label>
+      <label class="field">Postal / ZIP<input type="text" name="personal.postal_code" value="{{ p.get('postal_code','') | e }}"></label>
+      <label class="field">Street Address<input type="text" name="personal.address" value="{{ p.get('address','') | e }}"></label>
+      <label class="field">LinkedIn URL<input type="text" name="personal.linkedin_url" value="{{ p.get('linkedin_url','') | e }}"></label>
+      <label class="field">GitHub URL<input type="text" name="personal.github_url" value="{{ p.get('github_url','') | e }}"></label>
+      <label class="field">Portfolio URL<input type="text" name="personal.portfolio_url" value="{{ p.get('portfolio_url','') | e }}"></label>
+      <label class="field">Job Site Password <small style="color:#475569">(leave blank to keep existing)</small>
+        <input type="password" name="personal.password" placeholder="••••••••"></label>
+    </div>
+  </fieldset>
+
+  <fieldset class="fieldset">
+    <legend>Work Authorization</legend>
+    {% set wa = profile.get('work_authorization', {}) %}
+    <div class="form-grid">
+      <label class="field">Legally Authorized to Work
+        <select name="work_authorization.legally_authorized_to_work">
+          <option value="Yes" {% if wa.get('legally_authorized_to_work') in ('Yes', True, 'true') %}selected{% endif %}>Yes</option>
+          <option value="No" {% if wa.get('legally_authorized_to_work') in ('No', False, 'false') %}selected{% endif %}>No</option>
+        </select>
+      </label>
+      <label class="field">Requires Sponsorship
+        <select name="work_authorization.require_sponsorship">
+          <option value="No" {% if wa.get('require_sponsorship') in ('No', False, 'false') %}selected{% endif %}>No</option>
+          <option value="Yes" {% if wa.get('require_sponsorship') in ('Yes', True, 'true') %}selected{% endif %}>Yes</option>
+        </select>
+      </label>
+      <label class="field">Work Permit Type<input type="text" name="work_authorization.work_permit_type" value="{{ wa.get('work_permit_type','') | e }}"></label>
+    </div>
+  </fieldset>
+
+  <fieldset class="fieldset">
+    <legend>Availability</legend>
+    {% set av = profile.get('availability', {}) %}
+    <div class="form-grid">
+      <label class="field">Earliest Start Date<input type="text" name="availability.earliest_start_date" value="{{ av.get('earliest_start_date','Immediately') | e }}"></label>
+    </div>
+  </fieldset>
+
+  <fieldset class="fieldset">
+    <legend>Compensation</legend>
+    {% set c = profile.get('compensation', {}) %}
+    <div class="form-grid">
+      <label class="field">Expected Salary<input type="text" name="compensation.salary_expectation" value="{{ c.get('salary_expectation','') | e }}"></label>
+      <label class="field">Currency<input type="text" name="compensation.salary_currency" value="{{ c.get('salary_currency','USD') | e }}"></label>
+      <label class="field">Min Range<input type="text" name="compensation.salary_range_min" value="{{ c.get('salary_range_min','') | e }}"></label>
+      <label class="field">Max Range<input type="text" name="compensation.salary_range_max" value="{{ c.get('salary_range_max','') | e }}"></label>
+    </div>
+  </fieldset>
+
+  <fieldset class="fieldset">
+    <legend>Experience</legend>
+    {% set ex = profile.get('experience', {}) %}
+    <div class="form-grid">
+      <label class="field">Years of Experience<input type="text" name="experience.years_of_experience_total" value="{{ ex.get('years_of_experience_total','') | e }}"></label>
+      <label class="field">Education Level<input type="text" name="experience.education_level" value="{{ ex.get('education_level','') | e }}"></label>
+      <label class="field">Current / Recent Title<input type="text" name="experience.current_title" value="{{ (ex.get('current_title') or ex.get('current_job_title','')) | e }}"></label>
+      <label class="field">Target Role<input type="text" name="experience.target_role" value="{{ ex.get('target_role','') | e }}"></label>
+    </div>
+  </fieldset>
+
+  <fieldset class="fieldset">
+    <legend>Skills <small style="color:#475569;font-weight:400">(comma-separated)</small></legend>
+    {% set sk = profile.get('skills_boundary', {}) %}
+    <div class="form-grid">
+      <label class="field">Languages
+        <input type="text" name="skills_boundary.languages"
+               value="{{ (sk.get('languages') or sk.get('programming_languages') or []) | join(', ') | e }}"></label>
+      <label class="field">Frameworks
+        <input type="text" name="skills_boundary.frameworks"
+               value="{{ (sk.get('frameworks') or []) | join(', ') | e }}"></label>
+      <label class="field">Tools & Platforms
+        <input type="text" name="skills_boundary.tools"
+               value="{{ (sk.get('tools') or []) | join(', ') | e }}"></label>
+    </div>
+  </fieldset>
+
+  <fieldset class="fieldset">
+    <legend>Resume Facts <small style="color:#475569;font-weight:400">(preserved during tailoring, comma-separated)</small></legend>
+    {% set rf = profile.get('resume_facts', {}) %}
+    <div class="form-grid">
+      <label class="field">Companies
+        <input type="text" name="resume_facts.preserved_companies"
+               value="{{ (rf.get('preserved_companies') or []) | join(', ') | e }}"></label>
+      <label class="field">Projects
+        <input type="text" name="resume_facts.preserved_projects"
+               value="{{ (rf.get('preserved_projects') or []) | join(', ') | e }}"></label>
+      <label class="field">School
+        <input type="text" name="resume_facts.preserved_school"
+               value="{{ (rf.get('preserved_school') or '') | e }}"></label>
+      <label class="field">Real Metrics
+        <input type="text" name="resume_facts.real_metrics"
+               value="{{ (rf.get('real_metrics') or []) | join(', ') | e }}"></label>
+    </div>
+  </fieldset>
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary">Save Profile</button>
+    <a href="/settings/profile" class="btn btn-secondary">Reset</a>
+  </div>
+</form>
+{% endblock %}

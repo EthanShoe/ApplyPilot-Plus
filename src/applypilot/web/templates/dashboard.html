@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — ApplyPilot{% endblock %}
+{% block content %}
+
+<!-- Pipeline control -->
+<div class="section">
+  <div class="section-title">Pipeline</div>
+  <div id="pipeline-wrapper"
+       hx-get="/partials/pipeline-status"
+       hx-trigger="every 5s"
+       hx-swap="innerHTML">
+    {% include "partials/pipeline_status.html" %}
+  </div>
+</div>
+
+<!-- Stats -->
+<div id="stats-wrapper"
+     hx-get="/partials/stats"
+     hx-trigger="every 10s"
+     hx-swap="innerHTML">
+  {% include "partials/stats.html" %}
+</div>
+
+<!-- Filters -->
+<div class="filters">
+  <span class="filter-label">Score:</span>
+  <button class="filter-btn active" id="filter-5"
+          hx-get="/partials/job-cards?min_score=5"
+          hx-target="#job-cards-wrapper"
+          hx-swap="innerHTML"
+          onclick="setActive(this)">All 5+</button>
+  <button class="filter-btn" id="filter-7"
+          hx-get="/partials/job-cards?min_score=7"
+          hx-target="#job-cards-wrapper"
+          hx-swap="innerHTML"
+          onclick="setActive(this)">7+ Strong</button>
+  <button class="filter-btn" id="filter-9"
+          hx-get="/partials/job-cards?min_score=9"
+          hx-target="#job-cards-wrapper"
+          hx-swap="innerHTML"
+          onclick="setActive(this)">9+ Perfect</button>
+  <span class="filter-label" style="margin-left:1rem">Search:</span>
+  <input class="search-input" type="text" placeholder="Filter by title, site, location…"
+         hx-get="/partials/job-cards"
+         hx-trigger="input changed delay:400ms"
+         hx-target="#job-cards-wrapper"
+         hx-swap="innerHTML"
+         name="search">
+</div>
+
+<!-- Job cards -->
+<div id="job-cards-wrapper">
+  {% include "partials/job_cards.html" %}
+</div>
+
+<script>
+function setActive(btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+</script>
+{% endblock %}

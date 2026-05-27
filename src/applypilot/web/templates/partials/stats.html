@@ -1,0 +1,34 @@
+<div class="summary">
+  <div class="stat-card stat-total">
+    <div class="stat-num">{{ stats.total }}</div>
+    <div class="stat-label">Total Jobs</div>
+  </div>
+  <div class="stat-card stat-ok">
+    <div class="stat-num">{{ stats.with_description }}</div>
+    <div class="stat-label">Enriched</div>
+  </div>
+  <div class="stat-card stat-scored">
+    <div class="stat-num">{{ stats.scored }}</div>
+    <div class="stat-label">Scored</div>
+  </div>
+  <div class="stat-card stat-high">
+    <div class="stat-num">{{ stats.tailored }}</div>
+    <div class="stat-label">Tailored</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-num" style="color:#a78bfa">{{ stats.with_cover_letter }}</div>
+    <div class="stat-label">Cover Letters</div>
+  </div>
+  <div class="stat-card stat-applied">
+    <div class="stat-num">{{ stats.applied }}</div>
+    <div class="stat-label">Applied</div>
+  </div>
+  <div class="stat-card stat-failed">
+    <div class="stat-num">{{ stats.apply_errors }}</div>
+    <div class="stat-label">Apply Errors</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-num" style="color:#94a3b8">{{ stats.pending_detail }}</div>
+    <div class="stat-label">Pending Enrich</div>
+  </div>
+</div>

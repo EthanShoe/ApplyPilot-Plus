@@ -1,0 +1,24 @@
+services:
+  applypilot:
+    build: .
+    image: applypilot-plus
+    volumes:
+      - ./data:/data                  # all applypilot data (profile, DB, resumes, logs)
+      - ~/.claude:/root/.claude       # Claude Code Pro subscription credentials
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    stdin_open: true                  # needed for `applypilot init` wizard
+    tty: true
+
+  web:
+    image: applypilot-plus
+    depends_on:
+      - applypilot
+    command: ["serve", "--host", "0.0.0.0", "--port", "8093"]
+    volumes:
+      - ./data:/data
+      - ~/.claude:/root/.claude
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    ports:
+      - "8093:8093"

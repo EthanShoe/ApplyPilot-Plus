@@ -1,0 +1,53 @@
+<div class="pipeline-panel">
+  {% if pipeline.is_running %}
+    <span class="pipeline-badge badge-running">
+      {{ pipeline.stage }} — {{ pipeline.elapsed_seconds }}s
+    </span>
+  {% elif pipeline.status == "error" %}
+    <span class="pipeline-badge badge-error">Error: {{ pipeline.error | e }}</span>
+  {% elif pipeline.status == "done" %}
+    <span class="pipeline-badge badge-done">Finished: {{ pipeline.stage }} in {{ pipeline.elapsed_seconds }}s</span>
+  {% elif pipeline.status == "stopped" %}
+    <span class="pipeline-badge badge-stopped">Stopped: {{ pipeline.stage }}</span>
+  {% else %}
+    <span class="pipeline-badge badge-idle">Idle</span>
+  {% endif %}
+
+  <div class="pipeline-buttons">
+    {% set dis = "disabled" if pipeline.is_running else "" %}
+    <button class="btn btn-primary btn-sm" {{ dis }}
+            hx-post="/pipeline/run/discover"
+            hx-target="#pipeline-wrapper"
+            hx-swap="innerHTML">Discover</button>
+    <button class="btn btn-primary btn-sm" {{ dis }}
+            hx-post="/pipeline/run/enrich"
+            hx-target="#pipeline-wrapper"
+            hx-swap="innerHTML">Enrich</button>
+    <button class="btn btn-success btn-sm" {{ dis }}
+            hx-post="/pipeline/run/score"
+            hx-target="#pipeline-wrapper"
+            hx-swap="innerHTML">Score</button>
+    <button class="btn btn-success btn-sm" {{ dis }}
+            hx-post="/pipeline/run/tailor"
+            hx-target="#pipeline-wrapper"
+            hx-swap="innerHTML">Tailor</button>
+    <button class="btn btn-success btn-sm" {{ dis }}
+            hx-post="/pipeline/run/cover"
+            hx-target="#pipeline-wrapper"
+            hx-swap="innerHTML">Cover Letters</button>
+    <button class="btn btn-primary btn-sm" {{ dis }}
+            hx-post="/pipeline/run/all"
+            hx-target="#pipeline-wrapper"
+            hx-swap="innerHTML">Run All</button>
+    <button class="btn btn-warning btn-sm" {{ dis }}
+            hx-post="/pipeline/run/apply"
+            hx-target="#pipeline-wrapper"
+            hx-swap="innerHTML">Auto-Apply</button>
+    {% if pipeline.is_running %}
+    <button class="btn btn-danger btn-sm"
+            hx-post="/pipeline/stop"
+            hx-target="#pipeline-wrapper"
+            hx-swap="innerHTML">Stop</button>
+    {% endif %}
+  </div>
+</div>

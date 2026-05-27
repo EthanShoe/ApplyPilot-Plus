@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Logs — ApplyPilot{% endblock %}
+{% block content %}
+<h1>Logs</h1>
+
+<div class="log-layout">
+  <aside class="log-sidebar">
+    <h3>Log Files</h3>
+    {% if log_files %}
+    <ul class="log-list">
+      {% for f in log_files %}
+      <li><a href="/logs/{{ f | e }}" class="log-link {% if selected == f %}log-link--active{% endif %}">{{ f | e }}</a></li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p style="color:#94a3b8;font-size:.875rem">No log files found.</p>
+    {% endif %}
+  </aside>
+
+  <main class="log-content">
+    {% if selected %}
+    <div class="log-header">
+      <span class="log-filename">{{ selected | e }}</span>
+      {% if truncated %}<span class="log-truncated">(last 512 KB shown)</span>{% endif %}
+    </div>
+    <pre class="log-pre">{{ content | e }}</pre>
+    {% else %}
+    <p style="color:#94a3b8">Select a log file from the sidebar.</p>
+    {% endif %}
+  </main>
+</div>
+{% endblock %}
