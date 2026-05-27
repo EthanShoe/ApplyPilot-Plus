@@ -5,12 +5,11 @@ from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
 
 from applypilot.config import LOG_DIR
+from applypilot.web.templates_config import templates
 
 router = APIRouter()
-templates = Jinja2Templates(directory=str(Path(__file__).parent.parent / "templates"))
 
 _MAX_BYTES = 512 * 1024
 

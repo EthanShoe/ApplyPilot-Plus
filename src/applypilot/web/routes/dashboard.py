@@ -1,17 +1,14 @@
 """Dashboard routes: main page + HTMX partial endpoints."""
 from __future__ import annotations
 
-from pathlib import Path
-
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
 
 from applypilot.database import get_connection, get_stats
 from applypilot.web.state import pipeline_state
+from applypilot.web.templates_config import templates
 
 router = APIRouter()
-templates = Jinja2Templates(directory=str(Path(__file__).parent.parent / "templates"))
 
 
 def _get_jobs(min_score: int = 5, search: str = "") -> list[dict]:

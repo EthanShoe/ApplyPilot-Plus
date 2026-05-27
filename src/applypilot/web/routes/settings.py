@@ -2,18 +2,16 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 from typing import Any
 
 import yaml
 from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
 
 from applypilot.config import ENV_PATH, PROFILE_PATH, SEARCH_CONFIG_PATH
+from applypilot.web.templates_config import templates
 
 router = APIRouter()
-templates = Jinja2Templates(directory=str(Path(__file__).parent.parent / "templates"))
 
 _SENSITIVE_KEYS = frozenset({
     "GEMINI_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY",
