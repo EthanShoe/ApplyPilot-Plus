@@ -10,7 +10,7 @@ import re
 import time
 from datetime import datetime, timezone
 
-from applypilot.config import RESUME_PATH
+from applypilot.config import RESUME_PATH, load_profile
 from applypilot.database import get_connection, get_jobs_by_stage
 from applypilot.llm import get_client
 
@@ -19,7 +19,7 @@ log = logging.getLogger(__name__)
 
 # ── Scoring Prompt ────────────────────────────────────────────────────────
 
-SCORE_PROMPT = """You are a job fit evaluator. Given a candidate's resume and a job description, score how well the candidate fits the role.
+_SCORE_PROMPT_BASE = """You are a job fit evaluator. Given a candidate's resume and a job description, score how well the candidate fits the role.
 
 SCORING CRITERIA:
 - 9-10: Perfect match. Candidate has direct experience in nearly all required skills and qualifications.
@@ -33,11 +33,20 @@ IMPORTANT FACTORS:
 - Consider transferable experience (automation, scripting, API work)
 - Factor in the candidate's project experience
 - Be realistic about experience level vs. job requirements (years of experience, seniority)
+- If the job lists a salary or pay range and it is significantly below the candidate's minimum ({salary_min}/yr), cap the score at 4 regardless of skill fit.
 
 RESPOND IN EXACTLY THIS FORMAT (no other text):
 SCORE: [1-10]
 KEYWORDS: [comma-separated ATS keywords from the job description that match or could match the candidate]
 REASONING: [2-3 sentences explaining the score]"""
+
+
+def _build_score_prompt(salary_min: int | None) -> str:
+    if salary_min:
+        return _SCORE_PROMPT_BASE.replace("{salary_min}", f"${salary_min:,}")
+    return _SCORE_PROMPT_BASE.replace(
+        "- If the job lists a salary or pay range and it is significantly below the candidate's minimum ({salary_min}/yr), cap the score at 4 regardless of skill fit.\n", ""
+    )
 
 
 def _parse_score_response(response: str) -> dict:
@@ -69,12 +78,13 @@ def _parse_score_response(response: str) -> dict:
     return {"score": score, "keywords": keywords, "reasoning": reasoning}
 
 
-def score_job(resume_text: str, job: dict) -> dict:
+def score_job(resume_text: str, job: dict, score_prompt: str) -> dict:
     """Score a single job against the resume.
 
     Args:
         resume_text: The candidate's full resume text.
         job: Job dict with keys: title, site, location, full_description.
+        score_prompt: Pre-built system prompt (includes salary floor if known).
 
     Returns:
         {"score": int, "keywords": str, "reasoning": str}
@@ -87,7 +97,7 @@ def score_job(resume_text: str, job: dict) -> dict:
     )
 
     messages = [
-        {"role": "system", "content": SCORE_PROMPT},
+        {"role": "system", "content": score_prompt},
         {"role": "user", "content": f"RESUME:\n{resume_text}\n\n---\n\nJOB POSTING:\n{job_text}"},
     ]
 
@@ -111,6 +121,16 @@ def run_scoring(limit: int = 0, rescore: bool = False) -> dict:
         {"scored": int, "errors": int, "elapsed": float, "distribution": list}
     """
     resume_text = RESUME_PATH.read_text(encoding="utf-8")
+
+    try:
+        profile = load_profile()
+        salary_min = profile.get("salary_range_min") or profile.get("salary_expectation")
+        if isinstance(salary_min, str):
+            salary_min = int("".join(c for c in salary_min if c.isdigit())) or None
+    except Exception:
+        salary_min = None
+
+    score_prompt = _build_score_prompt(salary_min)
     conn = get_connection()
 
     if rescore:
@@ -147,7 +167,7 @@ def run_scoring(limit: int = 0, rescore: bool = False) -> dict:
         conn.commit()
 
     for job in jobs:
-        result = score_job(resume_text, job)
+        result = score_job(resume_text, job, score_prompt)
         result["url"] = job["url"]
         completed += 1
 
