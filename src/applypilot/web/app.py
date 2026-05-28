@@ -7,14 +7,17 @@ from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import Depends, FastAPI, Request
+from fastapi import FastAPI, Request
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
 log = logging.getLogger(__name__)
 
 _executor: ThreadPoolExecutor | None = None
+
+_PUBLIC_PATHS = {"/login", "/logout"}
 
 
 def get_executor() -> ThreadPoolExecutor:
@@ -22,12 +25,14 @@ def get_executor() -> ThreadPoolExecutor:
     return _executor
 
 
-def require_auth(request: Request):
-    password = os.environ.get("UI_PASSWORD", "")
-    if not password:
-        return
-    if not request.session.get("authed"):
-        return RedirectResponse("/login", status_code=302)
+class AuthMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        password = os.environ.get("UI_PASSWORD", "")
+        path = request.url.path
+        if password and path not in _PUBLIC_PATHS and not path.startswith("/static"):
+            if not request.session.get("authed"):
+                return RedirectResponse("/login", status_code=302)
+        return await call_next(request)
 
 
 @asynccontextmanager
@@ -49,6 +54,7 @@ def create_app() -> FastAPI:
     app = FastAPI(title="ApplyPilot", lifespan=lifespan)
 
     secret = os.environ.get("UI_SECRET") or os.environ.get("UI_PASSWORD") or "applypilot-default-secret"
+    app.add_middleware(AuthMiddleware)
     app.add_middleware(
         SessionMiddleware,
         secret_key=secret,
@@ -61,8 +67,6 @@ def create_app() -> FastAPI:
     static_dir.mkdir(exist_ok=True)
     app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
-    auth_deps = [Depends(require_auth)]
-
     from applypilot.web.routes.auth import router as auth_router
     from applypilot.web.routes.dashboard import router as dashboard_router
     from applypilot.web.routes.pipeline import router as pipeline_router
@@ -70,10 +74,10 @@ def create_app() -> FastAPI:
     from applypilot.web.routes.logs import router as logs_router
 
     app.include_router(auth_router)
-    app.include_router(dashboard_router, dependencies=auth_deps)
-    app.include_router(pipeline_router, prefix="/pipeline", dependencies=auth_deps)
-    app.include_router(settings_router, prefix="/settings", dependencies=auth_deps)
-    app.include_router(logs_router, prefix="/logs", dependencies=auth_deps)
+    app.include_router(dashboard_router)
+    app.include_router(pipeline_router, prefix="/pipeline")
+    app.include_router(settings_router, prefix="/settings")
+    app.include_router(logs_router, prefix="/logs")
 
     return app
 
