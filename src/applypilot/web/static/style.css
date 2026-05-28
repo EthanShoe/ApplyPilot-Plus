@@ -132,6 +132,20 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: #60a5fa
 .log-content { background: #1e293b; border-radius: 12px; padding: 1.25rem; }
 .log-pre { font-family: 'Fira Code', 'Cascadia Code', monospace; font-size: 0.78rem; color: #94a3b8; line-height: 1.6; white-space: pre-wrap; word-break: break-all; max-height: 70vh; overflow-y: auto; }
 
+/* ── Context menu ── */
+.ctx-wrap { position: relative; display: inline-block; }
+.ctx-menu {
+  position: absolute; top: 100%; left: 0; z-index: 100;
+  background: #1e293b; border: 1px solid #334155; border-radius: 6px;
+  padding: .25rem 0; min-width: 140px; box-shadow: 0 4px 12px rgba(0,0,0,.4);
+}
+.ctx-item {
+  display: block; width: 100%; text-align: left;
+  background: none; border: none; color: #f1f5f9;
+  padding: .45rem .85rem; font-size: .8rem; cursor: pointer;
+}
+.ctx-item:hover { background: #334155; }
+
 /* ── Responsive ── */
 @media (max-width: 768px) {
   .container { padding: 1rem; }

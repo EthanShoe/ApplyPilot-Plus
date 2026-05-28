@@ -23,14 +23,37 @@
             hx-post="/pipeline/run/enrich"
             hx-target="#pipeline-wrapper"
             hx-swap="innerHTML">Enrich</button>
-    <button class="btn btn-success btn-sm" {{ dis }}
-            hx-post="/pipeline/run/score"
-            hx-target="#pipeline-wrapper"
-            hx-swap="innerHTML">Score</button>
-    <button class="btn btn-success btn-sm" {{ dis }}
-            hx-post="/pipeline/run/tailor"
-            hx-target="#pipeline-wrapper"
-            hx-swap="innerHTML">Tailor</button>
+
+    <div class="ctx-wrap">
+      <button class="btn btn-success btn-sm" {{ dis }}
+              hx-post="/pipeline/run/score"
+              hx-target="#pipeline-wrapper"
+              hx-swap="innerHTML"
+              oncontextmenu="showCtx(event,'ctx-score')">Score</button>
+      <div id="ctx-score" class="ctx-menu" style="display:none">
+        <button class="ctx-item" {{ dis }}
+                hx-post="/pipeline/run/rescore"
+                hx-target="#pipeline-wrapper"
+                hx-swap="innerHTML"
+                onclick="hideCtx('ctx-score')">Re-score all</button>
+      </div>
+    </div>
+
+    <div class="ctx-wrap">
+      <button class="btn btn-success btn-sm" {{ dis }}
+              hx-post="/pipeline/run/tailor"
+              hx-target="#pipeline-wrapper"
+              hx-swap="innerHTML"
+              oncontextmenu="showCtx(event,'ctx-tailor')">Tailor</button>
+      <div id="ctx-tailor" class="ctx-menu" style="display:none">
+        <button class="ctx-item" {{ dis }}
+                hx-post="/pipeline/run/retailor"
+                hx-target="#pipeline-wrapper"
+                hx-swap="innerHTML"
+                onclick="hideCtx('ctx-tailor')">Re-tailor all</button>
+      </div>
+    </div>
+
     <button class="btn btn-success btn-sm" {{ dis }}
             hx-post="/pipeline/run/cover"
             hx-target="#pipeline-wrapper"
@@ -51,3 +74,19 @@
     {% endif %}
   </div>
 </div>
+
+<script>
+function showCtx(e, id) {
+  e.preventDefault();
+  document.querySelectorAll('.ctx-menu').forEach(m => m.style.display = 'none');
+  var m = document.getElementById(id);
+  m.style.display = 'block';
+  document.addEventListener('click', function h() {
+    m.style.display = 'none';
+    document.removeEventListener('click', h);
+  });
+}
+function hideCtx(id) {
+  document.getElementById(id).style.display = 'none';
+}
+</script>

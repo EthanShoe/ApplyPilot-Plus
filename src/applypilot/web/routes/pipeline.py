@@ -12,7 +12,7 @@ from applypilot.web.templates_config import templates
 router = APIRouter()
 log = logging.getLogger(__name__)
 
-PIPELINE_STAGES = {"discover", "enrich", "score", "tailor", "cover", "pdf", "all"}
+PIPELINE_STAGES = {"discover", "enrich", "score", "tailor", "cover", "pdf", "all", "rescore", "retailor"}
 
 
 def _status_response(request: Request, status_code: int = 200):
@@ -29,6 +29,20 @@ def _run_in_thread(stage: str, min_score: int, workers: int, validation_mode: st
         if stage == "apply":
             from applypilot.apply.launcher import main as apply_main
             apply_main(headless=True, continuous=False)
+        elif stage == "rescore":
+            from applypilot.scoring.scorer import run_scoring
+            run_scoring(rescore=True)
+        elif stage == "retailor":
+            from applypilot.database import get_connection
+            conn = get_connection()
+            conn.execute(
+                "UPDATE jobs SET tailored_resume_path=NULL, tailored_at=NULL, "
+                "cover_letter_path=NULL WHERE tailored_resume_path IS NOT NULL"
+            )
+            conn.commit()
+            from applypilot.pipeline import run_pipeline
+            run_pipeline(stages=["tailor"], min_score=min_score, workers=workers,
+                         validation_mode=validation_mode)
         else:
             from applypilot.pipeline import run_pipeline
             stages = [stage] if stage != "all" else None
