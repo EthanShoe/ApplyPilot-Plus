@@ -234,6 +234,108 @@ applypilot dashboard                    # Open HTML results dashboard
 
 ---
 
+## Docker & Web UI (EthanShoe fork additions)
+
+This fork adds a Docker setup and a live web UI for running ApplyPilot on a remote server without touching the command line.
+
+### Quick Start (Docker)
+
+**Prerequisites:** Docker, Docker Compose, a server or machine you can reach in a browser.
+
+```bash
+git clone https://github.com/EthanShoe/ApplyPilot-Plus.git
+cd ApplyPilot-Plus
+docker compose build
+docker compose up -d web
+```
+
+Open `http://your-server-ip:8093` in a browser.
+
+### First-Time Setup
+
+Run the setup wizard once to create your profile, add your resume, and configure job searches:
+
+```bash
+docker compose run --rm applypilot init
+```
+
+The wizard will ask for your resume path, profile details, and API keys. All data is stored in `./data/` on the host.
+
+### Authenticating Claude Code (for Auto-Apply)
+
+Auto-apply uses the Claude Code CLI under your Claude Pro subscription — no separate API key needed. Authenticate once:
+
+```bash
+docker compose run --entrypoint claude applypilot auth login
+```
+
+Follow the browser prompt. Your credentials are stored in `~/.claude` on the host and mounted into the container.
+
+### Docker Services
+
+| Service | Purpose |
+|---------|---------|
+| `applypilot` | CLI access — run `init`, `doctor`, one-off commands |
+| `web` | Live web UI on port 8093 |
+
+Both services share the same `./data` volume and Docker image.
+
+### Web UI Features
+
+- **Dashboard** — live job cards with fit scores, auto-refreshing stats
+- **Pipeline buttons** — Discover, Enrich, Score, Tailor, Cover Letters, Run All, Auto-Apply, Stop
+- **Right-click Score** → Re-score all jobs (useful after updating your resume/profile)
+- **Right-click Tailor** → Re-tailor all jobs (clears existing tailored resumes and reruns)
+- **Settings → Profile** — edit your profile without touching JSON
+- **Settings → Searches** — edit your search queries and locations
+- **Settings → Environment** — manage API keys (sensitive values are masked)
+- **Logs** — view pipeline log files
+
+### Setting a UI Password
+
+By default the web UI is open. To require a password:
+
+```bash
+echo "UI_PASSWORD=yourpassword" | sudo tee -a ./data/.env
+docker compose restart web
+```
+
+The session persists for 30 days so you won't be prompted on every visit. To log out, click the **Logout** button in the nav.
+
+To change or remove the password, edit `./data/.env` directly:
+
+```bash
+sudo nano ./data/.env
+docker compose restart web
+```
+
+### Data & Permissions
+
+All user data lives in `./data/` on the host:
+
+| Path | Contents |
+|------|---------|
+| `data/profile.json` | Your personal profile |
+| `data/searches.yaml` | Job search configuration |
+| `data/.env` | API keys and settings |
+| `data/jobs.db` | SQLite job database |
+| `data/tailored/` | Tailored resumes and cover letters (PDF) |
+| `data/logs/` | Pipeline run logs |
+
+The container runs as root, so files in `data/` will be owned by root on the host. Use `sudo` to edit them directly, or use the web UI.
+
+### Environment Variables
+
+Set these in `./data/.env`:
+
+| Variable | Purpose |
+|----------|---------|
+| `GEMINI_API_KEY` | Gemini API key for scoring/tailoring (free tier works) |
+| `UI_PASSWORD` | Password to access the web UI (optional) |
+| `CAPSOLVER_API_KEY` | CAPTCHA solving during auto-apply (optional) |
+
+---
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, coding standards, and PR guidelines.
