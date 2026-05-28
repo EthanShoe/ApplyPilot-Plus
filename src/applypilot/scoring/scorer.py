@@ -135,6 +135,16 @@ def run_scoring(limit: int = 0, rescore: bool = False) -> dict:
     completed = 0
     errors = 0
     results: list[dict] = []
+    BATCH_SIZE = 25
+
+    def _flush(batch: list[dict]) -> None:
+        now = datetime.now(timezone.utc).isoformat()
+        for r in batch:
+            conn.execute(
+                "UPDATE jobs SET fit_score = ?, score_reasoning = ?, scored_at = ? WHERE url = ?",
+                (r["score"], f"{r['keywords']}\n{r['reasoning']}", now, r["url"]),
+            )
+        conn.commit()
 
     for job in jobs:
         result = score_job(resume_text, job)
@@ -151,14 +161,13 @@ def run_scoring(limit: int = 0, rescore: bool = False) -> dict:
             completed, len(jobs), result["score"], job.get("title", "?")[:60],
         )
 
-    # Write scores to DB
-    now = datetime.now(timezone.utc).isoformat()
-    for r in results:
-        conn.execute(
-            "UPDATE jobs SET fit_score = ?, score_reasoning = ?, scored_at = ? WHERE url = ?",
-            (r["score"], f"{r['keywords']}\n{r['reasoning']}", now, r["url"]),
-        )
-    conn.commit()
+        if completed % BATCH_SIZE == 0:
+            _flush(results[-BATCH_SIZE:])
+
+    # Flush any remaining results
+    remainder = len(results) % BATCH_SIZE
+    if remainder:
+        _flush(results[-remainder:])
 
     elapsed = time.time() - t0
     log.info("Done: %d scored in %.1fs (%.1f jobs/sec)", len(results), elapsed, len(results) / elapsed if elapsed > 0 else 0)
