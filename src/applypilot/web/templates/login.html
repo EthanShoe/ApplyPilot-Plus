@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — ApplyPilot</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <style>
+    body { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .login-box {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 2rem 2.5rem;
+      width: 100%;
+      max-width: 360px;
+    }
+    .login-box h1 { margin: 0 0 1.5rem; font-size: 1.25rem; color: #f1f5f9; }
+    .login-box input[type=password] {
+      width: 100%; box-sizing: border-box;
+      background: #0f172a; border: 1px solid #334155; border-radius: 6px;
+      color: #f1f5f9; padding: .6rem .75rem; font-size: .9rem; margin-bottom: 1rem;
+    }
+    .login-box input[type=password]:focus { outline: none; border-color: #60a5fa; }
+    .login-error { color: #ef4444; font-size: .875rem; margin-bottom: .75rem; }
+  </style>
+</head>
+<body>
+  <div class="login-box">
+    <h1>ApplyPilot</h1>
+    {% if error %}<div class="login-error">{{ error | e }}</div>{% endif %}
+    <form method="POST" action="/login">
+      <input type="password" name="password" placeholder="Password" autofocus>
+      <button type="submit" class="btn btn-primary" style="width:100%">Enter</button>
+    </form>
+  </div>
+</body>
+</html>

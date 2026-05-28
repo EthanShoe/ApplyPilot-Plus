@@ -16,6 +16,9 @@
       <a class="nav-link {% if '/settings/searches' in request.url.path %}active{% endif %}" href="/settings/searches">Searches</a>
       <a class="nav-link {% if '/settings/env' in request.url.path %}active{% endif %}" href="/settings/env">Environment</a>
       <a class="nav-link {% if '/logs' in request.url.path %}active{% endif %}" href="/logs">Logs</a>
+      <form method="POST" action="/logout" style="margin:0">
+        <button type="submit" class="btn btn-secondary btn-sm">Logout</button>
+      </form>
     </div>
   </nav>
   <div class="container">

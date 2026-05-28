@@ -15,7 +15,7 @@ router = APIRouter()
 
 _SENSITIVE_KEYS = frozenset({
     "GEMINI_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY",
-    "LLM_API_KEY", "CAPSOLVER_API_KEY",
+    "LLM_API_KEY", "CAPSOLVER_API_KEY", "UI_PASSWORD", "UI_SECRET",
 })
 _MASK = "••••••••••••"
 
