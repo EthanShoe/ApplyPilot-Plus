@@ -39,6 +39,11 @@
           hx-target="#job-cards-wrapper"
           hx-swap="innerHTML"
           onclick="setActive(this)">9+ Perfect</button>
+  <button class="filter-btn filter-btn--skipped" id="filter-skipped"
+          hx-get="/partials/job-cards?show_skipped=1"
+          hx-target="#job-cards-wrapper"
+          hx-swap="innerHTML"
+          onclick="setActive(this)">Skipped</button>
   <span class="filter-label" style="margin-left:1rem">Search:</span>
   <input class="search-input" type="text" placeholder="Filter by title, site, location…"
          hx-get="/partials/job-cards"

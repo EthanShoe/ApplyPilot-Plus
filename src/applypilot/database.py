@@ -193,6 +193,8 @@ _ALL_COLUMNS: dict[str, str] = {
     "apply_duration_ms": "INTEGER",
     "apply_task_id": "TEXT",
     "verification_confidence": "TEXT",
+    # User curation
+    "skipped": "INTEGER DEFAULT 0",
 }
 
 
@@ -409,7 +411,8 @@ def get_jobs_by_stage(conn: sqlite3.Connection | None = None,
         "scored": "fit_score IS NOT NULL",
         "pending_tailor": (
             "fit_score >= ? AND full_description IS NOT NULL "
-            "AND tailored_resume_path IS NULL AND COALESCE(tailor_attempts, 0) < 5"
+            "AND tailored_resume_path IS NULL AND COALESCE(tailor_attempts, 0) < 5 "
+            "AND (skipped IS NULL OR skipped = 0)"
         ),
         "tailored": "tailored_resume_path IS NOT NULL",
         "pending_apply": (
@@ -417,7 +420,8 @@ def get_jobs_by_stage(conn: sqlite3.Connection | None = None,
             "AND application_url IS NOT NULL "
             "AND (apply_status IS NULL OR apply_status = 'failed') "
             "AND COALESCE(apply_attempts, 0) < ? "
-            "AND COALESCE(fit_score, 0) >= ?"
+            "AND COALESCE(fit_score, 0) >= ? "
+            "AND (skipped IS NULL OR skipped = 0)"
         ),
         "applied": "applied_at IS NOT NULL",
     }

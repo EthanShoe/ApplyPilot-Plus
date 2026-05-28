@@ -3,10 +3,12 @@
 {% for job in jobs %}
 {% set score = job.fit_score or 0 %}
 {% set score_color = "#10b981" if score >= 7 else ("#f59e0b" if score >= 5 else "#ef4444") %}
-<div class="job-card {% if job.apply_status == 'applied' %}job-card--applied{% elif job.apply_status %}job-card--failed{% endif %}"
+<div class="job-card {% if show_skipped %}job-card--skipped{% elif job.apply_status == 'applied' %}job-card--applied{% elif job.apply_status %}job-card--failed{% endif %}"
      data-score="{{ score }}" data-site="{{ (job.site or '') | e }}">
 
-  {% if job.apply_status == 'applied' %}
+  {% if show_skipped %}
+    <div class="skipped-banner">Skipped</div>
+  {% elif job.apply_status == 'applied' %}
     <div class="applied-banner">✓ Applied</div>
   {% elif job.apply_status %}
     <div class="failed-banner">✗ {{ job.apply_status | e }}{% if job.apply_error %} — {{ job.apply_error[:60] | e }}{% endif %}</div>
@@ -15,6 +17,12 @@
   <div class="card-header">
     <span class="score-pill" style="background:{{ score_color }}">{{ score }}</span>
     <a href="{{ (job.url or '#') | e }}" class="job-title" target="_blank" rel="noopener">{{ (job.title or 'Untitled') | e }}</a>
+    {% if not show_skipped %}
+    <form hx-post="/jobs/skip" hx-target="closest .job-card" hx-swap="outerHTML" style="margin:0">
+      <input type="hidden" name="url" value="{{ job.url | e }}">
+      <button type="submit" class="skip-btn" title="Skip this job">×</button>
+    </form>
+    {% endif %}
   </div>
 
   <div class="meta-row">
@@ -30,11 +38,16 @@
   {% endif %}
 
   {% if job.full_description %}
-  <p class="desc-preview">{{ job.full_description[:200] | e }}</p>
+  <p class="desc-preview">{{ (job.full_description | strip_md)[:300] | e }}</p>
   {% endif %}
 
   <div class="card-footer">
-    {% if job.application_url %}
+    {% if show_skipped %}
+    <form hx-post="/jobs/unskip" hx-target="closest .job-card" hx-swap="outerHTML" style="margin:0">
+      <input type="hidden" name="url" value="{{ job.url | e }}">
+      <button type="submit" class="btn btn-secondary btn-sm">Unskip</button>
+    </form>
+    {% elif job.application_url %}
     <a href="{{ job.application_url | e }}" class="apply-link" target="_blank" rel="noopener">Apply</a>
     {% endif %}
   </div>
@@ -42,5 +55,9 @@
 {% endfor %}
 </div>
 {% else %}
+{% if show_skipped %}
+<p class="empty-state">No skipped jobs.</p>
+{% else %}
 <p class="empty-state">No jobs at this score threshold yet. Run the pipeline to discover and score jobs.</p>
+{% endif %}
 {% endif %}

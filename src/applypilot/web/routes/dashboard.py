@@ -1,7 +1,7 @@
 """Dashboard routes: main page + HTMX partial endpoints."""
 from __future__ import annotations
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse
 
 from applypilot.database import get_connection, get_stats
@@ -11,19 +11,26 @@ from applypilot.web.templates_config import templates
 router = APIRouter()
 
 
-def _get_jobs(min_score: int = 5, search: str = "") -> list[dict]:
+def _get_jobs(min_score: int = 5, search: str = "", show_skipped: bool = False) -> list[dict]:
     conn = get_connection()
-    rows = conn.execute("""
+    if show_skipped:
+        where = "skipped = 1"
+        params: list = []
+    else:
+        where = "fit_score >= ? AND (skipped IS NULL OR skipped = 0)"
+        params = [min_score]
+    rows = conn.execute(f"""
         SELECT url, title, salary, location, site, fit_score, score_reasoning,
                full_description, application_url, applied_at, apply_status,
-               apply_error, last_attempted_at, tailored_resume_path, cover_letter_path
+               apply_error, last_attempted_at, tailored_resume_path, cover_letter_path,
+               skipped
         FROM jobs
-        WHERE fit_score >= ?
-        ORDER BY fit_score DESC, discovered_at DESC
+        WHERE {where}
+        ORDER BY fit_score DESC NULLS LAST, discovered_at DESC
         LIMIT 300
-    """, (min_score,)).fetchall()
+    """, params).fetchall()
     jobs = [dict(r) for r in rows]
-    if search:
+    if search and not show_skipped:
         sl = search.lower()
         jobs = [j for j in jobs if sl in (j.get("title") or "").lower()
                 or sl in (j.get("site") or "").lower()
@@ -47,10 +54,28 @@ async def stats_partial(request: Request):
 
 
 @router.get("/partials/job-cards", response_class=HTMLResponse)
-async def job_cards_partial(request: Request, min_score: int = 5, search: str = ""):
+async def job_cards_partial(request: Request, min_score: int = 5, search: str = "", show_skipped: int = 0):
+    skipped = bool(show_skipped)
     return templates.TemplateResponse(request, "partials/job_cards.html", {
-        "jobs": _get_jobs(min_score=min_score, search=search),
+        "jobs": _get_jobs(min_score=min_score, search=search, show_skipped=skipped),
+        "show_skipped": skipped,
     })
+
+
+@router.post("/jobs/skip", response_class=HTMLResponse)
+async def skip_job(url: str = Form(...)):
+    conn = get_connection()
+    conn.execute("UPDATE jobs SET skipped = 1 WHERE url = ?", (url,))
+    conn.commit()
+    return HTMLResponse("")
+
+
+@router.post("/jobs/unskip", response_class=HTMLResponse)
+async def unskip_job(url: str = Form(...)):
+    conn = get_connection()
+    conn.execute("UPDATE jobs SET skipped = 0 WHERE url = ?", (url,))
+    conn.commit()
+    return HTMLResponse("")
 
 
 @router.get("/partials/pipeline-status", response_class=HTMLResponse)
