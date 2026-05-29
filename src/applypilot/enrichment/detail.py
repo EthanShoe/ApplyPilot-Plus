@@ -670,8 +670,8 @@ def scrape_site_batch(
                 else:
                     stats["error"] += 1
                     conn.execute(
-                        "UPDATE jobs SET detail_error = ?, detail_scraped_at = ? WHERE url = ?",
-                        (result.get("error", "unknown"), now, url),
+                        "UPDATE jobs SET detail_error = ? WHERE url = ?",
+                        (result.get("error", "unknown"), url),
                     )
 
                 conn.commit()
