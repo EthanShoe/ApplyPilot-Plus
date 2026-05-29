@@ -1,12 +1,12 @@
 <div class="pipeline-panel">
   {% if pipeline.is_running %}
     <span class="pipeline-badge badge-running">
-      {{ pipeline.stage }} — {{ pipeline.elapsed_seconds }}s
+      {{ pipeline.stage }} — {{ pipeline.elapsed_seconds | format_duration }}
     </span>
   {% elif pipeline.status == "error" %}
     <span class="pipeline-badge badge-error">Error: {{ pipeline.error | e }}</span>
   {% elif pipeline.status == "done" %}
-    <span class="pipeline-badge badge-done">Finished: {{ pipeline.stage }} in {{ pipeline.elapsed_seconds }}s</span>
+    <span class="pipeline-badge badge-done">Finished: {{ pipeline.stage }} in {{ pipeline.elapsed_seconds | format_duration }}</span>
   {% elif pipeline.status == "stopped" %}
     <span class="pipeline-badge badge-stopped">Stopped: {{ pipeline.stage }}</span>
   {% else %}

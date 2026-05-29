@@ -28,4 +28,20 @@ def _strip_md(text: str) -> str:
 
 _env.filters["strip_md"] = _strip_md
 
+
+def _format_duration(seconds) -> str:
+    if seconds is None:
+        return ""
+    seconds = int(seconds)
+    h, remainder = divmod(seconds, 3600)
+    m, s = divmod(remainder, 60)
+    if h:
+        return f"{h}h {m}m {s}s"
+    if m:
+        return f"{m}m {s}s"
+    return f"{s}s"
+
+
+_env.filters["format_duration"] = _format_duration
+
 templates = Jinja2Templates(env=_env)
