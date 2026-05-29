@@ -36,37 +36,13 @@ blocked_sso:
 # Used by detail enrichment to resolve relative URLs scraped from sites.
 # Sites not listed here (or with null) cannot have relative URLs resolved.
 base_urls:
-  "Techstars Jobs": "https://www.techstars.com"
   "Startup.jobs": "https://startup.jobs"
-  "Nodesk": "https://nodesk.co"
 
 sites:
-  # ── Searchable sites (URL includes query + location params) ──────────
   - name: "SimplyHired"
     url: "https://www.simplyhired.com/search?q={query_encoded}&l={location_encoded}"
-    type: search
-
-  - name: "Lensa"
-    url: "https://lensa.com/talent/job-opportunities?flow=comingFromLandingPage&job-title={query_encoded}&remote_jobs=only"
-    type: search
-
-  - name: "Techstars Jobs"
-    url: "https://jobs.techstars.com/jobs?keywords={query_encoded}"
     type: search
 
   - name: "Startup.jobs"
     url: "https://startup.jobs/?q={query_encoded}&remote=true"
     type: search
-
-  # ── Static sites (no query params, scraped once) ─────────────────────
-  - name: "Nodesk"
-    url: "https://nodesk.co/remote-jobs/"
-    type: static
-
-  - name: "TopStartups"
-    url: "https://topstartups.io/jobs/?job_location=Remote"
-    type: static
-
-  - name: "Jobspresso"
-    url: "https://jobspresso.co/remote-work/"
-    type: static
