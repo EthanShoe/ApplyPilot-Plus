@@ -76,42 +76,47 @@ def _scrape_with_retry(kwargs: dict, max_retries: int = 2, backoff: float = 5.0)
 
 # -- Location filtering ------------------------------------------------------
 
-def _load_location_config(search_cfg: dict) -> tuple[list[str], list[str]]:
-    """Extract accept/reject location lists from search config.
-
-    Falls back to sensible defaults if not defined in the YAML.
-    """
+def _load_location_config(search_cfg: dict) -> tuple[list[str], list[str], list[str]]:
+    """Extract accept/reject/whitelist location lists from search config."""
     accept = search_cfg.get("location_accept", [])
     reject = search_cfg.get("location_reject_non_remote", [])
-    return accept, reject
+    whitelist = [w.lower() for w in search_cfg.get("remote_country_whitelist", [])]
+    return accept, reject, whitelist
 
 
-def _location_ok(location: str | None, accept: list[str], reject: list[str]) -> bool:
+def _location_ok(location: str | None, accept: list[str], reject: list[str],
+                 whitelist: list[str] = ()) -> bool:
     """Check if a job location passes the user's location filter.
 
-    Remote jobs are always accepted. Non-remote jobs must match an accept
-    pattern and not match a reject pattern.
+    Remote jobs: if a whitelist is configured, they must either match a
+    whitelisted country or carry no specific country info (pure "Remote").
+    Non-remote jobs must match an accept pattern and not match a reject pattern.
     """
     if not location:
         return True  # unknown location -- keep it, let scorer decide
 
     loc = location.lower()
 
-    # Remote jobs always OK
-    if any(r in loc for r in ("remote", "anywhere", "work from home", "wfh", "distributed")):
+    is_remote = any(r in loc for r in ("remote", "anywhere", "work from home", "wfh", "distributed"))
+
+    if is_remote:
+        if whitelist:
+            if any(w in loc for w in whitelist):
+                return True
+            # Strip remote keywords; if nothing remains it's a pure "Remote" listing
+            residual = loc
+            for kw in ("remote", "anywhere", "work from home", "wfh", "distributed"):
+                residual = residual.replace(kw, "")
+            return not residual.strip(" ,-/()")
         return True
 
-    # Reject non-remote matches
+    # Non-remote: reject then accept
     for r in reject:
         if r.lower() in loc:
             return False
-
-    # Accept matches
     for a in accept:
         if a.lower() in loc:
             return True
-
-    # No match -- reject unknown
     return False
 
 
@@ -195,6 +200,7 @@ def _run_one_search(
     accept_locs: list[str],
     reject_locs: list[str],
     glassdoor_map: dict,
+    whitelist_locs: list[str] = (),
 ) -> dict:
     """Run a single search query and store results in DB."""
     s = search
@@ -272,7 +278,7 @@ def _run_one_search(
     before = len(df)
     df = df[df.apply(lambda row: _location_ok(
         str(row.get("location", "")) if str(row.get("location", "")) != "nan" else None,
-        accept_locs, reject_locs,
+        accept_locs, reject_locs, whitelist_locs,
     ), axis=1)]
     filtered = before - len(df)
 
@@ -376,7 +382,7 @@ def _full_crawl(
     locs = search_cfg.get("locations", [])
     defaults = search_cfg.get("defaults", {})
     glassdoor_map = search_cfg.get("glassdoor_location_map", {})
-    accept_locs, reject_locs = _load_location_config(search_cfg)
+    accept_locs, reject_locs, whitelist_locs = _load_location_config(search_cfg)
 
     if tiers:
         queries = [q for q in queries if q.get("tier") in tiers]
@@ -411,7 +417,7 @@ def _full_crawl(
         result = _run_one_search(
             s, sites, results_per_site, hours_old,
             proxy_config, defaults, max_retries,
-            accept_locs, reject_locs, glassdoor_map,
+            accept_locs, reject_locs, glassdoor_map, whitelist_locs,
         )
         completed += 1
         total_new += result["new"]

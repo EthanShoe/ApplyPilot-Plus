@@ -82,6 +82,14 @@ location:
     - "India"
     - "Philippines"
 
+# Remote job country whitelist -- only accept remote jobs from these countries.
+# Jobs listed as plain "Remote" with no country info are always accepted.
+# Leave empty (or omit) to accept remote jobs from any country.
+remote_country_whitelist:
+  - "united states"
+  - "usa"
+  - "us"
+
 # Country for Indeed/LinkedIn/Google Jobs searches
 country: "USA"
 

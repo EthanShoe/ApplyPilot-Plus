@@ -57,23 +57,33 @@ def load_employers() -> dict:
 
 
 def _load_location_filter(search_cfg: dict | None = None):
-    """Load location accept/reject lists from search config."""
+    """Load location accept/reject/whitelist lists from search config."""
     if search_cfg is None:
         search_cfg = config.load_search_config()
 
     accept = search_cfg.get("location_accept", [])
     reject = search_cfg.get("location_reject_non_remote", [])
-    return accept, reject
+    whitelist = [w.lower() for w in search_cfg.get("remote_country_whitelist", [])]
+    return accept, reject, whitelist
 
 
-def _location_ok(location: str | None, accept: list[str], reject: list[str]) -> bool:
+def _location_ok(location: str | None, accept: list[str], reject: list[str],
+                 whitelist: list[str] = ()) -> bool:
     """Check if a job location passes the user's location filter."""
     if not location:
         return True
 
     loc = location.lower()
 
-    if any(r in loc for r in ("remote", "anywhere", "work from home", "wfh", "distributed")):
+    is_remote = any(r in loc for r in ("remote", "anywhere", "work from home", "wfh", "distributed"))
+    if is_remote:
+        if whitelist:
+            if any(w in loc for w in whitelist):
+                return True
+            residual = loc
+            for kw in ("remote", "anywhere", "work from home", "wfh", "distributed"):
+                residual = residual.replace(kw, "")
+            return not residual.strip(" ,-/()")
         return True
 
     for r in reject:
@@ -226,6 +236,7 @@ def search_employer(
     location_filter: bool = True,
     accept_locs: list[str] | None = None,
     reject_locs: list[str] | None = None,
+    whitelist_locs: list[str] | None = None,
 ) -> list[dict]:
     """Search a single Greenhouse employer via API."""
     log.info('%s: searching "%s"...', employer["name"], search_text)
@@ -241,7 +252,7 @@ def search_employer(
     if location_filter and (accept_locs or reject_locs):
         filtered = []
         for job in jobs:
-            if _location_ok(job.get("location"), accept_locs or [], reject_locs or []):
+            if _location_ok(job.get("location"), accept_locs or [], reject_locs or [], whitelist_locs or []):
                 filtered.append(job)
         jobs = filtered
 
@@ -264,7 +275,7 @@ def search_all(
         log.warning("No Greenhouse employers configured")
         return 0, 0
 
-    accept_locs, reject_locs = _load_location_filter()
+    accept_locs, reject_locs, whitelist_locs = _load_location_filter()
 
     log.info('Greenhouse API search: %d employers, "%s", workers=%d', len(employers), search_text, workers)
 
@@ -281,6 +292,7 @@ def search_all(
                 location_filter,
                 accept_locs,
                 reject_locs,
+                whitelist_locs,
             ): key
             for key, emp in employers.items()
         }
