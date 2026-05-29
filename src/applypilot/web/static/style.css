@@ -80,6 +80,7 @@ h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem; }
 .job-card--skipped { opacity: 0.55; border-left-color: #4b5563 !important; }
 .card-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
 .score-pill { display: inline-flex; align-items: center; justify-content: center; min-width: 1.6rem; height: 1.6rem; border-radius: 6px; color: #0f172a; font-weight: 700; font-size: 0.8rem; flex-shrink: 0; }
+.group-count-badge { display: inline-flex; align-items: center; justify-content: center; height: 1.6rem; padding: 0 0.4rem; border-radius: 6px; background: #1e3a5f; color: #93c5fd; font-weight: 700; font-size: 0.75rem; flex-shrink: 0; }
 .job-title { color: #e2e8f0; text-decoration: none; font-weight: 600; font-size: 0.95rem; }
 .job-title:hover { color: #60a5fa; }
 .meta-row { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.4rem; }

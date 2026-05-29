@@ -385,6 +385,18 @@ def store_jobs(conn: sqlite3.Connection, jobs: list[dict],
     return new, existing
 
 
+def skip_jobs(conn: sqlite3.Connection, urls: list[str]) -> None:
+    placeholders = ",".join("?" * len(urls))
+    conn.execute(f"UPDATE jobs SET skipped = 1 WHERE url IN ({placeholders})", urls)
+    conn.commit()
+
+
+def unskip_jobs(conn: sqlite3.Connection, urls: list[str]) -> None:
+    placeholders = ",".join("?" * len(urls))
+    conn.execute(f"UPDATE jobs SET skipped = 0 WHERE url IN ({placeholders})", urls)
+    conn.commit()
+
+
 def get_jobs_by_stage(conn: sqlite3.Connection | None = None,
                       stage: str = "discovered",
                       min_score: int | None = None,

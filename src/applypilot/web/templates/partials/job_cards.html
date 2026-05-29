@@ -16,11 +16,16 @@
 
   <div class="card-header">
     <span class="score-pill" style="background:{{ score_color }}">{{ score }}</span>
+    {% if job.group_count > 1 %}
+    <span class="group-count-badge" title="{{ job.group_count }} duplicate listings grouped">×{{ job.group_count }}</span>
+    {% endif %}
     <a href="{{ (job.url or '#') | e }}" class="job-title" target="_blank" rel="noopener">{{ (job.title or 'Untitled') | e }}</a>
     {% if not show_skipped %}
-    <form hx-post="/jobs/skip" hx-target="closest .job-card" hx-swap="outerHTML" style="margin:0">
-      <input type="hidden" name="url" value="{{ job.url | e }}">
-      <button type="submit" class="skip-btn" title="Skip this job">×</button>
+    <form hx-post="/jobs/skip-group" hx-target="closest .job-card" hx-swap="outerHTML" style="margin:0">
+      {% for u in job.group_urls %}
+      <input type="hidden" name="urls" value="{{ u | e }}">
+      {% endfor %}
+      <button type="submit" class="skip-btn" title="{% if job.group_count > 1 %}Skip all {{ job.group_count }} listings{% else %}Skip this job{% endif %}">×</button>
     </form>
     {% endif %}
   </div>
@@ -43,9 +48,11 @@
 
   <div class="card-footer">
     {% if show_skipped %}
-    <form hx-post="/jobs/unskip" hx-target="closest .job-card" hx-swap="outerHTML" style="margin:0">
-      <input type="hidden" name="url" value="{{ job.url | e }}">
-      <button type="submit" class="btn btn-secondary btn-sm">Unskip</button>
+    <form hx-post="/jobs/unskip-group" hx-target="closest .job-card" hx-swap="outerHTML" style="margin:0">
+      {% for u in job.group_urls %}
+      <input type="hidden" name="urls" value="{{ u | e }}">
+      {% endfor %}
+      <button type="submit" class="btn btn-secondary btn-sm">Unskip{% if job.group_count > 1 %} ({{ job.group_count }}){% endif %}</button>
     </form>
     {% elif job.application_url %}
     <a href="{{ job.application_url | e }}" class="apply-link" target="_blank" rel="noopener">Apply</a>
